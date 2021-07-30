@@ -1,0 +1,6 @@
+# Excluded OS Files
+.DS_Store
+
+# Excluded IDE Files 
+.idea/
+.vscode/

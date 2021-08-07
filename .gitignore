@@ -4,3 +4,6 @@
 # Excluded IDE Files 
 .idea/
 .vscode/
+
+# Excluded Project Files
+vendor/

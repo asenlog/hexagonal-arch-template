@@ -1,10 +1,17 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"log"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/spf13/viper"
 )
+
+var errConfigPath = errors.New("failed to determine config path")
 
 // HTTP configuration
 type HTTP struct {
@@ -22,6 +29,7 @@ type DB struct {
 	ReaderHost string `env:"DB_READER_HOST"`
 	Port       string `env:"DB_PORT"`
 	DB         string `env:"DB_DB"`
+	SSLMode    string `env:"DB_SSL_MODE"`
 }
 
 // Config holds the service configuration
@@ -32,9 +40,35 @@ type Config struct {
 
 // Load loads all the configuration of the app
 func Load() (*Config, error) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		return nil, fmt.Errorf("runtime.Caller failed error: %w", errConfigPath)
+	}
+
+	configPath := filepath.Dir(file)
+
+	viper.AddConfigPath(fmt.Sprintf("%s/../../", configPath))
+	viper.SetConfigName(".env")
+	viper.SetConfigType("env")
+
 	viper.AutomaticEnv()
-	
+
+	if err := viper.ReadInConfig(); err != nil {
+		if errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			log.Print("failed to find config file, looking for env vars...")
+		} else {
+			return nil, fmt.Errorf("failed to parse config: %w", err)
+		}
+	}
+
 	return &Config{
+		// configure the http service
+		HTTP: HTTP{
+			Port:            viper.GetInt("HTTP_SERVER_PORT"),
+			ShutdownTimeout: viper.GetDuration("HTTP_SERVER_SHUTDOWN_TIMEOUT"),
+			ReadTimeout:     viper.GetDuration("HTTP_SERVER_READ_TIMEOUT"),
+			WriteTimeout:    viper.GetDuration("HTTP_SERVER_WRITE_TIMEOUT"),
+		},
 		DB: DB{
 			Username:   viper.Get("DB_USERNAME").(string),
 			Password:   viper.Get("DB_PASSWORD").(string),

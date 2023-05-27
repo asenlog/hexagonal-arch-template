@@ -1,22 +1,38 @@
 package sql
 
 import (
-	"database/sql"
+	"app/internal/config"
+	"context"
 	"fmt"
+	"net/url"
 
-	"github.com/asenlog/hexagonal-architecture/config"
+	// PG driver.
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/jmoiron/sqlx"
 )
 
 // New creates a handle to a Database.
-func New(cfg config.DB, host string) (*sql.DB, error) {
-	db, err := sql.Open("mysql",
-		fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?parseTime=True", cfg.Username, cfg.Password, host, cfg.Port, cfg.DB))
-	if err != nil {
-		return nil, err
+func New(ctx context.Context, cfg config.DB, host string) (*sqlx.DB, error) {
+	opt := url.Values{}
+	opt.Add("sslmode", cfg.SSLMode)
+	opt.Add("timezone", "UTC")
+
+	con := &url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(cfg.Username, cfg.Password),
+		Host:     host,
+		Path:     cfg.DB,
+		RawQuery: opt.Encode(),
 	}
 
-	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("cannot ping DB : %w", err)
+	// underneath uses sql.Open that is concurrent safe.
+	db, err := sqlx.Connect("pgx", con.String())
+	if err != nil {
+		return nil, fmt.Errorf("sql.Open failed: %w", err)
+	}
+
+	if err := db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("db.Ping failed: %w", err)
 	}
 
 	return db, nil

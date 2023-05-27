@@ -1,0 +1,42 @@
+version: "3"
+services:
+  api:
+    container_name: service_api
+    restart: always
+    build:
+      context: ./../../
+      dockerfile: deploy/build/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ENV=dev
+      - HTTP_SERVER_PORT=8080
+      - PG_USERNAME=test
+      - PG_PASSWORD=test
+      - PG_WRITER_HOST=service_db
+      - PG_READER_HOST=service_db
+      - PG_PORT=5432
+      - PG_DB=test
+      - PG_SSL_MODE=disable
+    networks:
+      - srv-local
+    depends_on:
+      - service_db
+
+  database:
+    container_name: service_db
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: test
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+    ports:
+      - "5432:5432"
+    networks:
+      - srv-local
+
+networks:
+  srv-local: { }
+
+volumes:
+  db_data: { }

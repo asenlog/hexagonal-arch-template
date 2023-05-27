@@ -1,0 +1,7 @@
+CREATE SCHEMA IF NOT EXISTS public;
+
+CREATE TABLE IF NOT EXISTS public.my_table
+(
+    id BIGINT PRIMARY KEY
+);
+

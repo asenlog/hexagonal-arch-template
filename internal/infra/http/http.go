@@ -27,7 +27,9 @@ func New() *HTTP {
 func (h *HTTP) routeBuilder() http.Handler {
 	r := gin.Default()
 
+	// health check
 	r.GET("/health", func(c *gin.Context) { c.JSON(http.StatusOK, nil) })
+	// exposing prometheus metrics
 	r.GET("/metrics", func(c *gin.Context) { c.JSON(http.StatusOK, nil) })
 
 	return r

@@ -9,9 +9,9 @@ import (
 	"runtime"
 	"syscall"
 
-	"github.com/asenlog/hexagonal-architecture/config"
-	"github.com/asenlog/hexagonal-architecture/internal/infra/http"
-	"github.com/asenlog/hexagonal-architecture/internal/infra/repository/sql"
+	"app/internal/config"
+	"app/internal/infra/http"
+	"app/internal/infra/repository/sql"
 )
 
 func main() {
@@ -43,7 +43,7 @@ func run(log *log.Logger) error {
 	}
 
 	// Init database connection pool
-	db, err := sql.New(cfg.DB, cfg.DB.WriterHost)
+	db, err := sql.New(ctx, cfg.DB, cfg.DB.WriterHost)
 	if err != nil {
 		log.Fatal("main: API failed to instantiate database")
 
